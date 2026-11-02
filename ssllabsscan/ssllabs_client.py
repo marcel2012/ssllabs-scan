@@ -158,29 +158,36 @@ class SSLLabsClient:
             for ep in data["endpoints"]:
                 # Skip endpoints that were not contactable during scan
                 # (e.g. GitHub Pages URLs with IPv6 endpoints)
-                if "Unable" in ep.get("statusMessage", ""):
+                if ep.get("statusMessage", "") in [
+                    "Unable to connect to the server",
+                    "Failed to communicate with the secure server",
+                    "IP address is from private address space (RFC 1918)",
+                ]:
                     continue
                 # see SUMMARY_COL_NAMES
+                fs = None
+                if "forwardSecrecy" in ep["details"]:
+                    fs = FORWARD_SECRECY[str(ep["details"].get("forwardSecrecy"))]
                 summary = [
                     host,
                     ep.get("ipAddress"),
-                    ep["grade"],
-                    ep["hasWarnings"],
+                    ep.get("grade"),
+                    ep.get("hasWarnings"),
                     na,
                     CHAIN_ISSUES[str(ep["details"]["certChains"][0]["issues"])],
-                    FORWARD_SECRECY[str(ep["details"]["forwardSecrecy"])],
+                    fs,
                     ep["details"].get("heartbeat"),
                     ep["details"].get("vulnBeast"),
                     ep["details"].get("drownVulnerable"),
                     ep["details"].get("heartbleed"),
-                    ep["details"]["freak"],
-                    False if ep["details"]["openSslCcs"] == 1 else True,
-                    False if ep["details"]["openSSLLuckyMinus20"] == 1 else True,
+                    ep["details"].get("freak"),
+                    False if ep["details"].get("openSslCcs") == 1 else True,
+                    False if ep["details"].get("openSSLLuckyMinus20") == 1 else True,
                     ep["details"].get("poodle"),
-                    False if ep["details"]["poodleTls"] == 1 else True,
-                    ep["details"]["supportsRc4"],
-                    ep["details"]["rc4WithModern"],
-                    ep["details"]["rc4Only"],
+                    False if ep["details"].get("poodleTls") == 1 else True,
+                    ep["details"].get("supportsRc4"),
+                    ep["details"].get("rc4WithModern"),
+                    ep["details"].get("rc4Only"),
                 ]
                 for protocol in PROTOCOLS:
                     found = False
